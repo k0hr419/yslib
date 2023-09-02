@@ -11,37 +11,67 @@ def search_book():
     for i in book_list:
         if search_entry.get() in i["title"]:
             index_num += 1
-            book_result.insert("", "end", text=index_num, values=list(i.values()))
+            book_result.insert("", "end", values=list(i.values()), iid=str(index_num))
     search_entry.delete(0, "end")
 
 
+def login():
+    global user_info, ben_user_list, cur
+
+    user_info = []
+    borrow_page = tk.Toplevel(window)
+    borrow_page.title("로그인")
+
+    tk.Label(borrow_page, text="학번").grid(row=0, column=0)
+    tk.Label(borrow_page, text="이름").grid(row=1, column=0)
+    bp_num_entry = tk.Entry(borrow_page)
+    bp_num_entry.grid(row=0, column=1, columnspan=2)
+    bp_name_entry = tk.Entry(borrow_page)
+    bp_name_entry.grid(row=1, column=1, columnspan=2)
+    enter_button = tk.Button(borrow_page, text="확인", command=lambda: borrow_page.destroy())
+    enter_button.grid(row=2, column=0, columnspan=3)
+
+    user_info.append(bp_num_entry.get())
+    user_info.append(bp_name_entry.get())
+    print(user_info)
+    cur.execute("SELECT * FROM ben_user")
+    for i in cur.fetchall():
+        ben_user_list.append(i[0])
+    if user_info[0] in ben_user_list:
+        return False
+    else:
+        return True
+
+
 def borrow():
-    global cur, get_value, bp_num_entry, bp_name_entry, book_list, borrow_page
-    cur.execute("INSERT INTO user (num, name, booknum) VALUES(?, ?, ?);", (bp_num_entry.get(), bp_name_entry.get(), get_value[3]))
-    for i in book_list:
-        if i["code"] == get_value[2]:
-            i["byn"] = "대출불가"    
-    cur.execute("SELECT * FROM user")
-    for i in cur:
-        print(i)
-
-
-def borrow_page():
-    global book_result, get_value, bp_num_entry, bp_name_entry
+    global book_result, get_value, bp_num_entry, bp_name_entry, cur, user_info
+    print(user_info)
     get_value = book_result.item(book_result.focus())["values"]
     if get_value[4] == "대출가능":
-        borrow_page = tk.Toplevel(window)
-        borrow_page.title("대출하기")
-
-        tk.Label(borrow_page, text="학번").grid(row=0, column=0)
-        tk.Label(borrow_page, text="이름").grid(row=1, column=0)
-        bp_num_entry = tk.Entry(borrow_page)
-        bp_num_entry.grid(row=0, column=1, columnspan=2)
-        bp_name_entry = tk.Entry(borrow_page)
-        bp_name_entry.grid(row=1, column=1, columnspan=2)
-        tk.Button(borrow_page, text="확인", command=borrow).grid(row=2, column=0, columnspan=3)
+        if login():
+            cur.execute(f"INSERT INTO user (num, name, booknum) VALUES('{user_info[0]}', '{user_info[1]}', '{get_value[3]}');")
+            con.commit()
+            for i in book_list:
+                if i["code"] == get_value[2]:
+                    i["byn"] = "대출불가"
+            cur.execute("SELECT * FROM user")
+            cur.fetchall()
+            print(cur)
+        else:
+            msg.showwarning("이용 정지", f"연체 또는 기타 사유로 인해 현재 이용 불가 상태입니다.\n학번 : {user_info[0]}\n이름 : {user_info[1]}")
     else:
         msg.askokcancel("도서관 알림", "이미 대출중인 도서입니다.")
+
+
+def read_loan():
+    global user_info, cur
+    login()
+    cur.execute(f"SELECT * FROM user WHERE num = {user_info[0]} AND name = {user_info[1]};")
+    cur.fetchall()
+
+
+user_info = []
+ben_user_list = []
 
 window_xy = [1000, 700]
 
@@ -50,7 +80,6 @@ window.title("yslib")
 window.geometry(f"{window_xy[0]}x{window_xy[1]}")
 
 con = sq.connect("loan_data.db")
-con.row_factory = sq.Row
 cur = con.cursor()
 
 logo = tk.PhotoImage(file="logo.gif")
@@ -83,6 +112,7 @@ book_result.heading("byn", text="대출여부")
 
 book_result.pack()
 
-tk.Button(window, text="대출", command=borrow_page).pack()
+tk.Button(window, text="대출", command=borrow).pack()
+tk.Button(window, text="대출정보조회", command=read_loan).pack()
 
 window.mainloop()
