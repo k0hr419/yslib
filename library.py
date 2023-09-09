@@ -5,18 +5,19 @@ import sqlite3 as sq
 
 
 def search_book():
-    index_num = 0
-    for i in book_result.get_children():
-        book_result.delete(i)
-    for i in book_list:
-        if search_entry.get() in i["title"]:
-            index_num += 1
-            book_result.insert("", "end", values=list(i.values()), iid=str(index_num))
-    search_entry.delete(0, "end")
+    if search_entry.get():
+        index_num = 0
+        for i in book_result.get_children():
+            book_result.delete(i)
+        for i in book_list:
+            if search_entry.get() in i["title"]:
+                index_num += 1
+                book_result.insert("", "end", values=list(i.values()), iid=str(index_num))
+        search_entry.delete(0, "end")
 
 
-def login():
-    global user_info, ben_user_list, cur
+def login(work):
+    global user_info, ben_user_list, cur, bp_num_entry, bp_name_entry, borrow_page, ben_check
 
     user_info = []
     borrow_page = tk.Toplevel(window)
@@ -28,35 +29,45 @@ def login():
     bp_num_entry.grid(row=0, column=1, columnspan=2)
     bp_name_entry = tk.Entry(borrow_page)
     bp_name_entry.grid(row=1, column=1, columnspan=2)
-    enter_button = tk.Button(borrow_page, text="확인", command=lambda: borrow_page.destroy())
+    enter_button = tk.Button(borrow_page, text="확인", command=lambda: get_userinfo(work))
     enter_button.grid(row=2, column=0, columnspan=3)
 
+
+def get_userinfo(work):
+    global user_info, ben_check
     user_info.append(bp_num_entry.get())
     user_info.append(bp_name_entry.get())
-    print(user_info)
+    borrow_page.destroy()
     cur.execute("SELECT * FROM ben_user")
     for i in cur.fetchall():
         ben_user_list.append(i[0])
     if user_info[0] in ben_user_list:
-        return False
+        ben_check = False
     else:
-        return True
+        ben_check = True
+
+    if work == "borrow":
+        borrow()
+    elif work == "read_loan":
+        read_loan()
 
 
 def borrow():
-    global book_result, get_value, bp_num_entry, bp_name_entry, cur, user_info
-    print(user_info)
+    global book_result, get_value, cur, user_info
     get_value = book_result.item(book_result.focus())["values"]
     if get_value[4] == "대출가능":
-        if login():
+        if ben_check:
             cur.execute(f"INSERT INTO user (num, name, booknum) VALUES('{user_info[0]}', '{user_info[1]}', '{get_value[3]}');")
             con.commit()
             for i in book_list:
                 if i["code"] == get_value[2]:
                     i["byn"] = "대출불가"
-            cur.execute("SELECT * FROM user")
-            cur.fetchall()
+                    print(i["byn"])
+                    print("대출불가설정완료")
+            cur.execute("SELECT * FROM user;")
             print(cur)
+            cur.fetchall()
+            msg.showinfo(f"대출 완료", "도서를 대출하였습니다.\n반납 예정일 : {}")
         else:
             msg.showwarning("이용 정지", f"연체 또는 기타 사유로 인해 현재 이용 불가 상태입니다.\n학번 : {user_info[0]}\n이름 : {user_info[1]}")
     else:
@@ -65,13 +76,13 @@ def borrow():
 
 def read_loan():
     global user_info, cur
-    login()
-    cur.execute(f"SELECT * FROM user WHERE num = {user_info[0]} AND name = {user_info[1]};")
-    cur.fetchall()
+    cur.execute(f"SELECT * FROM user WHERE num = {int(user_info[0])} AND name = '{user_info[1]}';")
+    print(cur.fetchone())
 
 
 user_info = []
 ben_user_list = []
+ben_check = False
 
 window_xy = [1000, 700]
 
@@ -112,7 +123,7 @@ book_result.heading("byn", text="대출여부")
 
 book_result.pack()
 
-tk.Button(window, text="대출", command=borrow).pack()
-tk.Button(window, text="대출정보조회", command=read_loan).pack()
+tk.Button(window, text="대출", command=lambda: login("borrow")).pack()
+tk.Button(window, text="대출정보조회", command=lambda: login("read_loan")).pack()
 
 window.mainloop()
