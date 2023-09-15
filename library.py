@@ -4,6 +4,11 @@ import tkinter.messagebox as msg
 import sqlite3 as sq
 
 
+def change_frame(f1, f2):
+    f1.pack_forget()
+    f2.pack()
+
+
 def search_book():
     if search_entry.get():
         index_num = 0
@@ -16,40 +21,23 @@ def search_book():
         search_entry.delete(0, "end")
 
 
-def login(work):
-    global user_info, ben_user_list, cur, bp_num_entry, bp_name_entry, borrow_page, ben_check
+def log_in():
+    global user_info, ben_check, bp_num_entry, bp_name_entry
 
-    user_info = []
-    borrow_page = tk.Toplevel(window)
-    borrow_page.title("로그인")
-
-    tk.Label(borrow_page, text="학번").grid(row=0, column=0)
-    tk.Label(borrow_page, text="이름").grid(row=1, column=0)
-    bp_num_entry = tk.Entry(borrow_page)
-    bp_num_entry.grid(row=0, column=1, columnspan=2)
-    bp_name_entry = tk.Entry(borrow_page)
-    bp_name_entry.grid(row=1, column=1, columnspan=2)
-    enter_button = tk.Button(borrow_page, text="확인", command=lambda: get_userinfo(work))
-    enter_button.grid(row=2, column=0, columnspan=3)
-
-
-def get_userinfo(work):
-    global user_info, ben_check
     user_info.append(bp_num_entry.get())
     user_info.append(bp_name_entry.get())
-    borrow_page.destroy()
-    cur.execute("SELECT * FROM ben_user")
+    cur.execute("SELECT * FROM user_list")
     for i in cur.fetchall():
-        ben_user_list.append(i[0])
-    if user_info[0] in ben_user_list:
-        ben_check = False
-    else:
-        ben_check = True
+        if i[3]:
+            ben_user_list.append(i[1])
 
-    if work == "borrow":
-        borrow()
-    elif work == "read_loan":
-        read_loan()
+    cur.execute("SELECT * FROM user_list")
+    for i in cur.fetchall():
+        if user_info[0] == i[1] and user_info[1] == i[2]:
+            if user_info[1] in ben_user_list:
+                change_frame(frame_login, frame_home)
+            else:
+                msg.showwarning("이용 정지", "연체 또는 기타 사유로 인해 현재 이용 불가 상태입니다.")
 
 
 def borrow():
@@ -84,6 +72,10 @@ user_info = []
 ben_user_list = []
 ben_check = False
 
+book_list = [{"title": "언더아이디어", "writer": "김하랑", "code": "아813", "number": "YS0000000", "byn": "대출가능"},
+             {"title": "언더코딩", "writer": "aaa", "code": "adf", "number": "32144514", "byn": "대출가능"},
+             {"title": "코딩에듀", "writer": "ㅗㅂㄷ", "code": "ㅁㄷㅎ", "number": "15425454465", "byn": "대출불가"}]
+
 window_xy = [1000, 700]
 
 window = tk.Tk()
@@ -93,21 +85,51 @@ window.geometry(f"{window_xy[0]}x{window_xy[1]}")
 con = sq.connect("loan_data.db")
 cur = con.cursor()
 
+# window - pack
+
+# 프로그램 로고
 logo = tk.PhotoImage(file="logo.gif")
 tk.Label(window, image=logo, text="자료검색", compound="top", font=("", 15, "bold"), relief="groove", borderwidth=2).pack(
     side="top", fill="x", expand=False, padx=5, ipadx=window_xy[0] / 2 - 77, ipady=6, pady=(5, 0))
-frame_search = tk.LabelFrame(window)
-frame_search.pack(pady=5)
-tk.Label(frame_search, text="제목").grid(row=0, column=0)
-search_entry = tk.Entry(frame_search, width=50)
+
+#로그인 프레임
+frame_login = tk.Frame(window)
+frame_login.pack()
+
+tk.Label(frame_login, text="로그인", font=("", 15, "bold")).grid(row=0, column=0, columnspan=3, pady=(5, 0))
+tk.Label(frame_login, text="학번").grid(row=1, column=0)
+tk.Label(frame_login, text="이름").grid(row=2, column=0)
+bp_num_entry = tk.Entry(frame_login)
+bp_num_entry.grid(row=1, column=1, columnspan=2)
+bp_name_entry = tk.Entry(frame_login)
+bp_name_entry.grid(row=2, column=1, columnspan=2)
+enter_button = tk.Button(frame_login, text="확인", command=log_in)
+enter_button.grid(row=3, column=0, columnspan=3, pady=(5, 0))
+
+signup_page = tk.LabelFrame(frame_login, borderwidth=2, relief="groove")
+signup_page.grid(row=4, column=0, columnspan=3, pady=(15, 5), ipadx=10)
+tk.Label(signup_page, text="처음 이용한다면?").pack()
+tk.Button(signup_page, text="회원등록하기").pack(pady=(0, 3))
+
+# 작업 선택 프레임
+frame_home = tk.Frame(window)
+
+tk.Button(frame_home, text="대출")
+tk.Button(frame_home, text="반납")
+tk.Button(frame_home, text="대출정보조회")
+
+#검색 프레임
+frame_search = tk.Frame(window)
+
+frame_search_entry = tk.LabelFrame(frame_search)
+frame_search_entry.pack()
+
+tk.Label(frame_search_entry, text="제목").grid(row=0, column=0)
+search_entry = tk.Entry(frame_search_entry, width=50)
 search_entry.grid(row=0, column=1, columnspan=3)
-tk.Button(frame_search, text="검색", command=search_book).grid(row=0, column=4)
+tk.Button(frame_search_entry, text="검색", command=search_book).grid(row=0, column=4)
 
-book_list = [{"title": "언더아이디어", "writer": "김하랑", "code": "아813", "number": "YS0000000", "byn": "대출가능"},
-             {"title": "언더코딩", "writer": "aaa", "code": "adf", "number": "32144514", "byn": "대출가능"},
-             {"title": "코딩에듀", "writer": "ㅗㅂㄷ", "code": "ㅁㄷㅎ", "number": "15425454465", "byn": "대출불가"}]
-
-book_result = ttk.Treeview(window, columns=["title", "writer", "code", "number", "byn"])
+book_result = ttk.Treeview(frame_search, columns=["title", "writer", "code", "number", "byn"])
 book_result.column("#0", width=50, anchor="center")
 book_result.heading("#0", text="번호")
 book_result.column("title", anchor="center")
@@ -122,8 +144,5 @@ book_result.column("byn", width=90, anchor="center")
 book_result.heading("byn", text="대출여부")
 
 book_result.pack()
-
-tk.Button(window, text="대출", command=lambda: login("borrow")).pack()
-tk.Button(window, text="대출정보조회", command=lambda: login("read_loan")).pack()
 
 window.mainloop()
