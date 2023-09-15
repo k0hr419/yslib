@@ -24,6 +24,7 @@ def search_book():
 def log_in():
     global user_info, ben_check, bp_num_entry, bp_name_entry
 
+    user_idpw = []
     user_info.append(bp_num_entry.get())
     user_info.append(bp_name_entry.get())
     cur.execute("SELECT * FROM user_list")
@@ -31,13 +32,16 @@ def log_in():
         if i[3]:
             ben_user_list.append(i[1])
 
-    cur.execute("SELECT * FROM user_list")
+    cur.execute("SELECT name, pw FROM user_list")
     for i in cur.fetchall():
+        
+
         if user_info[0] == i[1] and user_info[1] == i[2]:
             if user_info[1] in ben_user_list:
                 change_frame(frame_login, frame_home)
             else:
                 msg.showwarning("이용 정지", "연체 또는 기타 사유로 인해 현재 이용 불가 상태입니다.")
+        
 
 
 def borrow():
