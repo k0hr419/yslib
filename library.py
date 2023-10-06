@@ -101,12 +101,13 @@ class Signup:
         self.signup_pwre.grid(row=8, column=0)
         tk.Label(signup, text="한번 더 입력해주세요.").grid(row=9, column=0, sticky=tk.W)
 
-        tk.Label(signup, text="학번/이름", font=("", 10, "bold")).grid(row=10, column=0, sticky=tk.W, pady=(5, 0))
+        tk.Label(signup, text="학번/이름 (예: 3204김하랑)", font=("", 10, "bold")).grid(row=10, column=0, sticky=tk.W, pady=(5, 0))
         self.signup_school = tk.Entry(signup, width=25)
         self.signup_school.grid(row=11, column=0)
         tk.Label(signup, text="타인 정보도용 금지").grid(row=12, column=0, sticky=tk.W)
 
         tk.Button(signup, text="등록하기", font=("", 10, "bold"), command=self.input_check).grid(row=13, column=0, pady=(10, 0))
+        tk.Entry
 
     def input_check(self):
         global cur
