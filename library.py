@@ -11,12 +11,15 @@ def change_frame(f1, f2):
 
 
 def search_book():
+    global book
+
+    print(load_bl)
     if search_entry.get():
         index_num = 0
         for i in book_result.get_children():
             book_result.delete(i)
         for i in book_list:
-            if search_entry.get() in i["title"]:
+            if search_entry.get() in i["제목"]:
                 index_num += 1
                 book_result.insert("", "end", values=list(i.values()), iid=str(index_num))
         search_entry.delete(0, "end")
@@ -154,10 +157,8 @@ def log_out():
 
 user_info = []
 ben_user_list = []
-
-book_list = [{"title": "언더아이디어", "writer": "김하랑", "code": "아813", "number": "YS0000000", "byn": "대출가능"},
-             {"title": "언더코딩", "writer": "aaa", "code": "adf", "number": "32144514", "byn": "대출가능"},
-             {"title": "코딩에듀", "writer": "ㅗㅂㄷ", "code": "ㅁㄷㅎ", "number": "15425454465", "byn": "대출불가"}]
+book_list = {}
+get_row = []
 
 window_xy = [1000, 700]
 
@@ -168,9 +169,21 @@ window.geometry(f"{window_xy[0]}x{window_xy[1]}")
 con = sq.connect("loan_data.db")
 cur = con.cursor()
 
-user_list = xl.load_workbook("통합 문서1.xlsx", data_only=True)
-load_ws = user_list["sheet1"]
+user_data = xl.load_workbook("통합 문서1.xlsx", data_only=True)
+book_data = xl.load_workbook("booklist.xlsx", data_only=True)
+load_bl = book_data["Sheet1"]
+load_ws = user_data["Sheet1"]
 print(load_ws.cell(1, 1).value)
+print(load_bl.cell(3, 4).value)
+
+for i in range(load_bl.max_row):
+    get_row.append(load_bl[i+1])
+
+for row in get_row:
+    book_list[row[0].value] = {"제목": row[1].value, "저자": row[2].value, "청구기호": row[3].value, "일련번호": row[4].value}
+
+for k, v in book_list.items():
+    print("k : %s, v : %s" % (k, v))
 
 # window - pack
 
