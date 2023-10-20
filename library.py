@@ -169,9 +169,9 @@ window.geometry(f"{window_xy[0]}x{window_xy[1]}")
 con = sq.connect("loan_data.db")
 cur = con.cursor()
 
-user_data = xl.load_workbook("통합 문서1.xlsx", data_only=True)
-book_data = xl.load_workbook("booklist.xlsx", data_only=True)
-load_bl = book_data["Sheet1"]
+user_data = xl.load_workbook(filename="통합 문서1.xlsx", data_only=True)
+book_data = xl.load_workbook(filename="booklist.xlsx", data_only=True)
+load_bl = book_data["sheet 1"]
 load_ws = user_data["Sheet1"]
 print(load_ws.cell(1, 1).value)
 print(load_bl.cell(3, 4).value)
@@ -180,7 +180,7 @@ for i in range(load_bl.max_row):
     get_row.append(load_bl[i+1])
 
 for row in get_row:
-    book_list[row[0].value] = {"제목": row[1].value, "저자": row[2].value, "청구기호": row[3].value, "일련번호": row[4].value}
+    book_list[row[0].value] = {"제목": row[2].value, "저자": row[3].value, "청구기호": row[5].value, "일련번호": row[1].value}
 
 for k, v in book_list.items():
     print("k : %s, v : %s" % (k, v))
