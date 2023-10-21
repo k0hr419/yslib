@@ -13,12 +13,13 @@ def change_frame(f1, f2):
 def search_book():
     global book
 
-    print(load_bl)
     if search_entry.get():
         index_num = 0
         for i in book_result.get_children():
             book_result.delete(i)
-        for i in book_list:
+        for i in book_list.values():
+            print(i)
+            print(type(i))
             if search_entry.get() in i["제목"]:
                 index_num += 1
                 book_result.insert("", "end", values=list(i.values()), iid=str(index_num))
@@ -171,7 +172,7 @@ cur = con.cursor()
 
 user_data = xl.load_workbook(filename="통합 문서1.xlsx", data_only=True)
 book_data = xl.load_workbook(filename="booklist.xlsx", data_only=True)
-load_bl = book_data["sheet 1"]
+load_bl = book_data["Sheet1"]
 load_ws = user_data["Sheet1"]
 print(load_ws.cell(1, 1).value)
 print(load_bl.cell(3, 4).value)
@@ -180,7 +181,7 @@ for i in range(load_bl.max_row):
     get_row.append(load_bl[i+1])
 
 for row in get_row:
-    book_list[row[0].value] = {"제목": row[2].value, "저자": row[3].value, "청구기호": row[5].value, "일련번호": row[1].value}
+    book_list[row[0].value] = {"제목": row[1].value, "저자": row[2].value, "청구기호": row[3].value, "일련번호": row[4].value, "대출여부": row[5].value}
 
 for k, v in book_list.items():
     print("k : %s, v : %s" % (k, v))
@@ -247,6 +248,7 @@ book_result.column("byn", width=90, anchor="center")
 book_result.heading("byn", text="대출여부")
 book_result.pack()
 tk.Button(frame_search, text="뒤로가기", command=lambda: change_frame(frame_search, frame_home)).pack()
+book_result.bind("<ButtonRelease-1>", borrow)
 
 # 내 정보
 frame_loan = tk.Frame(window)
